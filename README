@@ -1,0 +1,77 @@
+README
+
+Extraction and analysis code for interpreting neural data recorded from NHPs Soph (0059) and PG (504) completing variations of the gripmove task. M1, S1, and PMd are used.
+
+Note: This is all from Jack Hessburg, some of the initial extraction code built off of what other lab members (John Choi and David McNiel) wrote to get data from the plexon and bag files into easily manipulated structures. I’ve cleaned up and commented out some of the code, and will come back through and continue to do so and rename some of these files. 
+
+
+###################
+Preparation:
+
+First run bag2mat on the bagfiles for the given block, which yields a .mat file with that info. Then run plx2mat on the sorted plx files, which also yields a .mat file with the given info.
+
+Running extract_data_gripmove.m on these .mat files yields two structures, neural_data and task_data, saved as Extracted_nhpid_yyyy-mm-dd-hh-mat. I suggest running extract_data_gripmove_JH.m instead of extract_data_gripmove.m, I added to that extracting a few additional items from the bag files and correcting their timestamps so that they were on the proper, synced time.
+
+The saved mat file contains two structs, neural_data and task_data.
+
+Neural_data holds the bulk of the information. neural_data.spikeTimes holds the bulk of the plexon data, with a struct for each MAP, and whithin each the signame, channel number, and shortcode for each sorted unit. (The shortcode is just so that there is a continuous sequence of unit numbers for ease of manipulation later). And then for each {of these units, there is an array with the timestamps of the spikes (for example neural_data.spikeTimes{1,1}{1,
+
+Neural_data.Strobed holds the strobe words, which represents when the task transitions to a new scene. Each scene has a number, described below (disp_rp stands for display reward and punishment, and is the cue display scene. On non cued trials, it goes into that scene, nothing is displayed, and it goes out of that scenes almost immediately afterwards).
+
+%%%% strobe words %%%%
+% 0 = reset
+% 1 = disp_rp
+% 2 = reaching
+% 3 = grasping
+% 4 = transport
+% 5 = releasing
+% 6 = success
+% 7 = penalty
+% 8 = shattering
+
+The first column of neural_data.Strobed is the timestamp, and the second column the corresponding strobe word.
+
+The task_data struct has the rest of the information, including the parameters for the animal for that particular block at task_data.param_struct, and the force sensor data at task_data.force_sensor. The most useful information here though is reward_num and punishment_num. The information here is saved as the value and the timestamp, for example task_data.reward_num.val and task_data.reward_num.ts. The value is the level of reward or punishment for that particular trial, where 0 is no reward or punishment, or 1, 2, or 3 is that many cued reward or punishments, and the corresponding delivery if it was successful or unsuccessful, depending on the type of trial. One thing to note is that the reward num and punishment num are generated during the success scene of the previous trial before it goes into the upcoming trial that would display that number of reward or punishment. This was done so that the level of reward or punishment would only change after a successfully completed trial, so the monkey can't cheat it's way and fail a bunch of low-level reward trials to get to the large reward trials, which is what they were doing initially.
+
+
+###################
+My analysis:
+
+mult_extract_as_single.m takes in the extracted mat file, and outputs a matrix of trial-by-trial task data- reward and punishment numbers, if it was successful, what the times were, etc. This spits out a timestamp file, and the two together are then used for further analysis
+
+batch_extract_ts_val_mult.m runs mult_extract_as_single.m on however many blocks are specified there.
+
+simple_fr_smoothing_gen.py (and variations including catch trials and the alternate cues) takes in the extracted data and timestamp files
+    You can set normalization (z-score) to true or false
+    Gaussian smoothing can be set and the parameters defined at the top
+    The before and after cue and result time windows can all be set at the beginning
+    outputs one mat file for each region (simple_output_[region].mat) with the relevant trial information and a 3-d matrix for the cue and result periods with the binned (normalized or not, smoothed or not (I never ended up using the smoothed data but did do z-score nl)) firing rates, set up as the binned firing rates as a row for each trial, and then each unit as one of these matrices in the 3rd dimension. One separate matrix was saved for the cue and for the result period
+    I pulled this out and made it a separate script, but it’s from some of the modeling and other code that I used that took in the extracted files directly. I realized that this was taking too long and manipulating these huge files for no reason really, so took out that part of the code and saved just the firing rate data and minimum other necessary data to use going forward
+
+stats_rp_nocatch.R and stats_binary_nocatch.R can then be run from the simple_output files. 
+    For each block, for different trial types (eg rewarding vs non-rewarding, combinations of reward and punishment with successful and unsuccessful trials), looks at if there are significant differences between windows of time (such as before and after the cue, and before and after punishment), or differences within a given window between  different trial types. Binary differences calculated with Wilcoxon signed rank test, differences between multiple trial types analyzed with Skillings-Mack test  followed by a post-hoc pairwise non-parametric Dunn’s test with Benjamini and Hochberg False Discovery Rate correction.
+    Yields “block.Rdata” summary data file, and spits out figures for analysis within this particular block.
+
+To analyze a pseudo population created from multiple blocks of the same cue type from the same NHP, copy the block.Rdata from each of these blocks into a new directory, renaming them in the process (e.g. block1.Rdata, block2, block3, etc). Then, stats_rp_combine_blocks_2.R can be run to analyze and generate figures from these grouped blocks. Differences between windows and within windows are plotted, similarly to the individual block data, but with added plots for the within-windows differences I was interested in.
+
+pairwise_corr.R is for use on the data from a single block, and takes in the simple_output_[region].mat files. This yields figures including the Pearson correlation coefficient for  all significant pairwise correlations between units within a region and between the regions, as well as summaries of the total correlation and total absolute value of the correlation coefficients. These are generated for all trials, and for different trial types over the cue and result windows.
+
+###################
+For modeling analysis, the most recent version of the code [TODO rename] combine_and_model_play_r_p_lin_diff.py, with variations of the same name with _sonly and _fonly that look at only successful and failing trials. 
+    [TODO comment and clean up]
+    This code takes in the Extracted file and Extracted_..._timestamps.mat file for each block being analyzed. These two files for each block must all be in the same directory.
+    Several types of linear and divisive normalization models modeling the firing rate with R and P values as independent variables are used, fit with nonlinear least squares fitting. I have other versions of the code with different types of models, but these were the better performing and more interesting of the models that I looked at, and what I used for analysis. For each of the models, the significance of the fit, R2 value, adjusted R2 value, and several variations of Akaike’s Information Criterion (AIC) were calculated. 
+
+#
+Classification analysis-
+[TODO clean up and comment]
+
+Similarly to the model analysis script, this takes in from a single directory all of the Extracted and Extracted_..._timestamps.mat files for the blocks in question, and calculates the classifier on this pseudopopulation. XGBoost gradient boosting is used for multiple combinations of trial types, with 10-fold cross validation to determine a mean and standard error of the accuracy. This code takes a while to run.
+
+classifier_all_adjusted_chance_plots.py then takes in the output of the classifier file, v2_backup_cv.npy, and re-plots the graphs using the standard error of the cross validation of the ac curacies, and plots as well the chance levels adjusted to the number of trials for each block. 
+
+#
+autocorrelation- rp_autocorrelation.R plots autocorrelation for R, P, and RP combination to see if there is any correlation in the sequence of trials. 
+
+#
+timing_plots_* are different R scripts for running generating plots of the reach time and other experimental times for different trial types
