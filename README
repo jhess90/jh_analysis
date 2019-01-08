@@ -4,6 +4,7 @@ Extraction and analysis code for interpreting neural data recorded from NHPs Sop
 
 Note: This is all from Jack Hessburg, some of the initial extraction code built off of what other lab members (John Choi and David McNiel) wrote to get data from the plexon and bag files into easily manipulated structures. I’ve cleaned up and commented out some of the code, and will come back through and continue to do so and rename some of these files. 
 
+Code also maintained in github repo at https://github.com/jhess90/jh_analysis.git
 
 ###################
 Preparation:
