@@ -167,7 +167,11 @@ compute_plot_corr <- function(all_cue_fr_M1,all_cue_fr_S1,all_cue_fr_PmD,all_res
   )
   
   #plot correlation matrix
+<<<<<<< HEAD:pairwise_noise_corr_all.R
   png(paste("noise_corr_spear_all_",type_name,".png",sep=""),width=8,height=6,units="in",res=500)
+=======
+  png(paste("corr_spear_",type_name,".png",sep=""),width=8,height=6,units="in",res=500)
+>>>>>>> 9c204f79f222a285888b1295f106068c9c0734a7:pairwise_corr.R
   
   cue_plt <- ggcorrplot(cue_corr,type="lower",outline.col='white')
   cue_plt <- cue_plt + geom_vline(xintercept=total_unit_num_M1,color="grey") + geom_vline(xintercept=total_unit_num_M1+total_unit_num_S1,color="grey")
@@ -294,3 +298,9 @@ compute_plot_corr(all_cue_fr_M1,all_cue_fr_S1,all_cue_fr_PmD,all_res_fr_M1,all_r
 compute_plot_corr(all_cue_fr_M1,all_cue_fr_S1,all_cue_fr_PmD,all_res_fr_M1,all_res_fr_S1,all_res_fr_PmD,total_unit_num_M1,total_unit_num_S1,total_unit_num_PmD,'R0PX Succ',r0_px_s)
 compute_plot_corr(all_cue_fr_M1,all_cue_fr_S1,all_cue_fr_PmD,all_res_fr_M1,all_res_fr_S1,all_res_fr_PmD,total_unit_num_M1,total_unit_num_S1,total_unit_num_PmD,'RXP0 Succ',rx_p0_s)
 compute_plot_corr(all_cue_fr_M1,all_cue_fr_S1,all_cue_fr_PmD,all_res_fr_M1,all_res_fr_S1,all_res_fr_PmD,total_unit_num_M1,total_unit_num_S1,total_unit_num_PmD,'RXPX Succ',rx_px_s)
+<<<<<<< HEAD:pairwise_noise_corr_all.R
+=======
+
+
+
+>>>>>>> 9c204f79f222a285888b1295f106068c9c0734a7:pairwise_corr.R
