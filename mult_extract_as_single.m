@@ -1,14 +1,12 @@
-function mult_extract_as_single(filename)
+function extract_ts_val_test(filename)
 %pull out timestamps and reward/punishment values by trial
 %uses data from Extracted_NHPID_date_time.mat
-%also yields force data
-%trial_breakdown variable is a trial-by-trial matrix of trial data
-%and times that is the most relevant output of this, and used in
-%later analysis
+
 
 load (filename)
 
-%load('Extracted_0059_2017-02-08-11-43-22.mat');
+%load('Extracted_0059_2017-02-09-13-46-37.mat');
+%filename = 'Extracted_0059_2017-02-09-13-46-37.mat';
 
 %%%% strobe words %%%%
 % 0 = reset
@@ -43,13 +41,24 @@ for i = 1 : length(ordered_data)
     elseif ordered_data(i,2) == 7
         %failure
         trial_breakdown(reset_ct,4) = ordered_data(i,1);
+    elseif ordered_data(i,2) == 2
+        %reaching
+        trial_breakdown(reset_ct,12) = ordered_data(i,1);
+    elseif ordered_data(i,2) == 3
+        %grasping
+        trial_breakdown(reset_ct,13) = ordered_data(i,1);
+    elseif ordered_data(i,2) == 4
+        %transport
+        trial_breakdown(reset_ct,14) = ordered_data(i,1);
+    elseif ordered_data(i,2) == 5
+        %releasing
+        trial_breakdown(reset_ct,15) = ordered_data(i,1);
     elseif ordered_data(i,2) == 0
         %next reset
         trial_breakdown(reset_ct,9) = ordered_data(i,1);
         reset_ct = reset_ct+ 1;
     end   
 end
-
 
 reward_ts = task_data.reward_num.ts';
 reward_val = task_data.reward_num.val';
@@ -94,12 +103,22 @@ if trial_breakdown(2,5) > trial_breakdown(2,9) && trial_breakdown(2,7) > trial_b
 end
 
 
+%sanity check
+for i = 1:length(trial_breakdown)
+   for j = 1:8
+       if (trial_breakdown(i,j) > trial_breakdown(i,9)) && ~(j == 6) && ~(j == 8)
+           fprintf('error indexing trial %i of %i\n',i,length(trial_breakdown))
+       end
+   end
+end
 
 
 %trial breakdown columns:
-%1      2           3           4           5           6           7          8            9             10                 11
+%1      2           3           4           5           6           7          8            9             10                 11                 
 %reset  disp_rp     succ_scene  fail_scene time_r_pub   rew_num    time_p_pub  pun_num   nextreset       catch_trial_num     catch_trial_type
 
+%12         13          14          15
+%reaching   grasping    transport   releasing
 
 if sum(strcmp(fieldnames(task_data), 'catch_trial_pub')) == 1
     catch_trial = [];
@@ -119,18 +138,18 @@ if sum(strcmp(fieldnames(task_data), 'catch_trial_pub')) == 1
             end
         end
     end
+    if catch_indices(end,1) == 0
+       disp('potential error indexing catch_trials') 
+    end
 end
 
 
-if ~(isempty(catch_trial))
-    disp('catch_trials exist')
-else
-    disp('no catch_trials')
-end
+%if ~(isempty(catch_trial))
+%    disp('catch_trials exist')
+%else
+%    disp('no catch_trials')
+%end
 
-
-
-%below not really used, it was what I started with
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 all_r = trial_breakdown(trial_breakdown(:, 6) > 0, :);
@@ -140,6 +159,9 @@ all_p = trial_breakdown(trial_breakdown(:, 8) > 0, :);
 all_np = trial_breakdown(trial_breakdown(:, 8) == 0, :);
 
 %r_s = reward cue, success. r_f = reward cue, fail, nr = no reward, etc
+
+
+
 
 % %ALL: reward cue, success (rewarding)
 % r_s = trial_breakdown((trial_breakdown(:, 4) >= 1) & ~(trial_breakdown(:,7)==0) & (trial_breakdown(:, 8) == 0) & (trial_breakdown(:, 9) == 0), :);

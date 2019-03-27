@@ -32,7 +32,8 @@ Neural_data.Strobed holds the strobe words, which represents when the task trans
 
 The first column of neural_data.Strobed is the timestamp, and the second column the corresponding strobe word.
 
-The task_data struct has the rest of the information, including the parameters for the animal for that particular block at task_data.param_struct, and the force sensor data at task_data.force_sensor. The most useful information here though is reward_num and punishment_num. The information here is saved as the value and the timestamp, for example task_data.reward_num.val and task_data.reward_num.ts. The value is the level of reward or punishment for that particular trial, where 0 is no reward or punishment, or 1, 2, or 3 is that many cued reward or punishments, and the corresponding delivery if it was successful or unsuccessful, depending on the type of trial. One thing to note is that the reward num and punishment num are generated during the success scene of the previous trial before it goes into the upcoming trial that would display that number of reward or punishment. This was done so that the level of reward or punishment would only change after a successfully completed trial, so the monkey can't cheat it's way and fail a bunch of low-level reward trials to get to the large reward trials, which is what they were doing initially.
+The task_data struct has the rest of the information, including the parameters for the animal for that particular block at task_data.param_struct, and the force sensor data at task_data.force_sensor. The most useful information here though is reward_num and punishment_num. The information here is saved as the value and the timestamp, for example task_data.reward_num.val and task_data.reward_num.ts. The value is the level of reward or punishment for that particular trial, where 0 is no reward or punishment, or 1, 2, or 3 is that many cued reward or punishments, and the corresponding delivery if it was successful or unsuccessful, depending on the type of trial. One thing to note is that the reward num and punishment num are generated during the success scene of the previous trial before it goes into the upcoming trial that would d
+isplay that number of reward or punishment. This was done so that the level of reward or punishment would only change after a successfully completed trial, so the monkey can't cheat it's way and fail a bunch of low-level reward trials to get to the large reward trials, which is what they were doing initially.
 
 
 ###################
@@ -53,17 +54,17 @@ stats_rp_nocatch.R and stats_binary_nocatch.R can then be run from the simple_ou
     For each block, for different trial types (eg rewarding vs non-rewarding, combinations of reward and punishment with successful and unsuccessful trials), looks at if there are significant differences between windows of time (such as before and after the cue, and before and after punishment), or differences within a given window between  different trial types. Binary differences calculated with Wilcoxon signed rank test, differences between multiple trial types analyzed with Skillings-Mack test  followed by a post-hoc pairwise non-parametric Dunn’s test with Benjamini and Hochberg False Discovery Rate correction.
     Yields “block.Rdata” summary data file, and spits out figures for analysis within this particular block.
 
-To analyze a pseudo population created from multiple blocks of the same cue type from the same NHP, copy the block.Rdata from each of these blocks into a new directory, renaming them in the process (e.g. block1.Rdata, block2, block3, etc). Then, stats_rp_combine_blocks_2.R can be run to analyze and generate figures from these grouped blocks. Differences between windows and within windows are plotted, similarly to the individual block data, but with added plots for the within-windows differences I was interested in.
+To analyze a pseudopopulation created from multiple blocks of the same cue type from the same NHP, copy the block.Rdata from each of these blocks into a new directory, renaming them in the process (e.g. block1.Rdata, block2, block3, etc). Then, stats_rp_combine_blocks_2.R can be run to analyze and generate figures from these grouped blocks. Differences between windows and within windows are plotted, similarly to the individual block data, but with added plots for the within-windows differences I was interested in.
 
 pairwise_corr.R is for use on the data from a single block, and takes in the simple_output_[region].mat files. This yields figures including the Pearson correlation coefficient for  all significant pairwise correlations between units within a region and between the regions, as well as summaries of the total correlation and total absolute value of the correlation coefficients. These are generated for all trials, and for different trial types over the cue and result windows.
 
-###################
+###
 For modeling analysis, the most recent version of the code [TODO rename] combine_and_model_play_r_p_lin_diff.py, with variations of the same name with _sonly and _fonly that look at only successful and failing trials. 
     [TODO comment and clean up]
     This code takes in the Extracted file and Extracted_..._timestamps.mat file for each block being analyzed. These two files for each block must all be in the same directory.
     Several types of linear and divisive normalization models modeling the firing rate with R and P values as independent variables are used, fit with nonlinear least squares fitting. I have other versions of the code with different types of models, but these were the better performing and more interesting of the models that I looked at, and what I used for analysis. For each of the models, the significance of the fit, R2 value, adjusted R2 value, and several variations of Akaike’s Information Criterion (AIC) were calculated. 
 
-#
+###
 Classification analysis-
 [TODO clean up and comment]
 
@@ -71,8 +72,36 @@ Similarly to the model analysis script, this takes in from a single directory al
 
 classifier_all_adjusted_chance_plots.py then takes in the output of the classifier file, v2_backup_cv.npy, and re-plots the graphs using the standard error of the cross validation of the ac curacies, and plots as well the chance levels adjusted to the number of trials for each block. 
 
+
 #
 autocorrelation- rp_autocorrelation.R plots autocorrelation for R, P, and RP combination to see if there is any correlation in the sequence of trials. 
 
-#
+##
 timing_plots_* are different R scripts for running generating plots of the reach time and other experimental times for different trial types
+
+
+###
+dPCA: demixed principal component analysis (dimensionality reduction)
+
+Run the following in this order, using the master_fr_dict_*.npy files generated from the old linear modeling analysis that I had done. These files are saved on my dropbox, beaver, and nasty, but are just the binned and z-scored or smoothed firing rates for each region and unit, so that can be substituded with the other data files that I had done this for easily enough.
+
+dpca_setup_multirp.py
+analyze_dpca.py
+dpca_plot_analysis.R
+
+
+###
+pairwise correlation
+Several scripts were written to do the pairwise correlation analysis for rate and noise correlations of a few types. I couldn't pinpoint why I was getting some different results here, and so am including all of what I have.
+
+Most of the correlation analysis takes in the "simple_output_[region].mat" files used widely, which are the z-score normalized firing rates broken down by unit and trial, and binned at 10ms bins (although that can be adjusted). The ones that use the raw firing rate instead of the z-score normalized take in the "non_z_simple_output_[region].mat" files. This is run on just one block of data because it's comparing individual units in relationship to one another, so don't use data or files from multiple blocks put all together. All spearman correlation coefficients unless otherwise specified
+
+pairwise_corr_all.R: rate correlation on z-score firing rates. 
+pairwise_corr_all_raw_fr.R: rate correlation on raw firing rates
+pairwise_noise_concat_corr_all.R: noise correlation on concatenated z-score normalized firing rates
+pairwise_noise_concat_corr_all_raw_fr_avgall.R: noise correlation on concatenated raw firing rates. Population summary averaged over number of units in each region or region pair
+pairwise_noise_concat_corr_all_raw_fr_pearson.R: noise correlation on concatenated raw firing rates, using pearson correlation coefficient
+pairwise_noise_concat_corr_all_raw_fr.R: noise correlation on concatenated raw firing rates
+pairwise_noise_corr_all.R: noise correlation on averaged z-score normalized firing rates
+pairwise_noise_corr_all_raw_fr_avgall.R: noise correlation on averaged raw firing rates. Population summary averaged over number of units in each region or region pair
+pairwise_noise_corr_all_raw_fr.R: noise correlation on averaged raw firing rates
